@@ -1,3 +1,4 @@
+use guessing_game::Guess;
 use rand::Rng;
 use std::cmp::Ordering;
 use std::io;
@@ -17,9 +18,9 @@ fn main() {
             .read_line(&mut guess)
             .expect("Failed to read line");
 
-        // now guess also becomes immutable!
-        let guess: u32 = match guess.trim().parse() {
-            Ok(num) => num,
+        // now guess also becomes immutable due to shadowing!
+        let guess: i32 = match guess.trim().parse() {
+            Ok(num) => Guess::new(num).value(),
             // Catchall, will match any error
             Err(_) => continue,
         };
