@@ -22,9 +22,9 @@ pub fn get_stats(list: &Vec<i32>) -> Option<Stats<i32>> {
             current_max = *value;
         }
     }
-    let mut cloned = list.into_iter().cloned().collect::<Vec<i32>>();
-    cloned.sort();
-    let median = cloned[list.len() / 2];
+    let mut refs: Vec<&i32> = list.iter().collect();
+    refs.sort();
+    let median = *refs[list.len() / 2];
 
     Some(Stats { median, mode })
 }
