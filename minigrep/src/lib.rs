@@ -34,16 +34,22 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("not enough arguments");
-        }
+    pub fn build(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str> {
+        // Consume the filename
+        args.next();
 
-        let query = args[1].clone();
-        let file_path = args[2].clone();
+        let query = match args.next() {
+            Some(s) => s,
+            None => return Err("No query argument provided"),
+        };
 
-        let ignore_case = if args.len() == 4 {
-            args[3] == "ilike"
+        let file_path = match args.next() {
+            Some(s) => s,
+            None => return Err("No file path argument provided"),
+        };
+
+        let ignore_case = if let Some(arg) = args.next() {
+            arg == "ilike"
         } else {
             env::var("IGNORE_CASE").is_ok()
         };
