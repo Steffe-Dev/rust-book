@@ -4,5 +4,6 @@ fn main() {
     // concurrency::join();
     // concurrency::nest();
     // concurrency::channel();
-    concurrency::channel_wait();
+    // concurrency::channel_wait();
+    concurrency::channel_multi();
 }
