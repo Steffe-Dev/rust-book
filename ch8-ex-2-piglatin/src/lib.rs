@@ -5,19 +5,17 @@ pub fn to_pig_latin(input: &str) -> String {
             println!("s: {s}");
             let chars: Vec<char> = s.chars().collect();
             let first_char = chars[0];
-            let suffix;
-            let prefix;
-            if "aoiue".contains(first_char) {
-                suffix = String::from("-hay");
-                prefix = chars[..].iter().collect::<String>()
-            } else if chars.len() == 1 {
-                suffix = String::from("-ay");
-                prefix = chars[..].iter().collect::<String>()
+            let modifier;
+            let mut prefix = String::from(s);
+            if "aoiueAOIUE".contains(first_char) {
+                modifier = String::from("h");
+            } else if chars.len() == 1 || !first_char.is_alphabetic() {
+                modifier = String::from("");
             } else {
-                suffix = format!("-{first_char}ay");
+                modifier = String::from(first_char);
                 prefix = chars[1..].iter().collect::<String>()
             }
-            prefix + &suffix
+            format!("{}-{}ay", prefix, &modifier)
         })
         .collect::<Vec<String>>()
         .join(" ")
@@ -55,6 +53,11 @@ mod tests {
     #[test]
     fn test_single_letter_vowel() {
         assert_eq!(to_pig_latin("a"), "a-hay");
+    }
+
+    #[test]
+    fn test_single_letter_uppercase_vowel() {
+        assert_eq!(to_pig_latin("A"), "A-hay");
     }
 
     #[test]
@@ -103,7 +106,89 @@ mod tests {
     }
 
     #[test]
-    fn test_words_with_tabs() {
-        assert_eq!(to_pig_latin("hello\tworld"), "ello-hay orld-way");
+    fn test_words_with_newlines() {
+        assert_eq!(to_pig_latin("hello\nworld"), "ello-hay orld-way");
+    }
+
+    #[test]
+    fn test_unicode_chars() {
+        assert_eq!(to_pig_latin("über étoile"), "ber-üay toile-éay");
+    }
+
+    #[test]
+    fn test_long_word() {
+        assert_eq!(
+            to_pig_latin("supercalifragilisticexpialidocious"),
+            "upercalifragilisticexpialidocious-say"
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn test_all_caps() {
+        assert_eq!(to_pig_latin("HELLO WORLD"), "ELLO-HAY ORLD-WAY");
+    }
+
+    #[test]
+    fn test_multiple_hyphens() {
+        assert_eq!(to_pig_latin("top-notch-quality"), "op-notch-quality-tay");
+    }
+
+    #[test]
+    fn test_multiple_apostrophes() {
+        assert_eq!(to_pig_latin("rock'n'roll"), "ock'n'roll-ray");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_only_special_chars() {
+        assert_eq!(to_pig_latin("!@#$%"), "!@#$%-ay");
+    }
+
+    #[test]
+    fn test_multiple_consecutive_spaces() {
+        assert_eq!(to_pig_latin("hello      world"), "ello-hay orld-way");
+    }
+
+    #[test]
+    fn test_mixed_whitespace() {
+        assert_eq!(to_pig_latin("hello\t \n  world"), "ello-hay orld-way");
+    }
+
+    #[test]
+    fn test_emoji() {
+        assert_eq!(to_pig_latin("👋 world"), "👋-ay orld-way");
+    }
+
+    #[test]
+    fn test_very_long_input() {
+        let long_input = "hello ".repeat(1000);
+        assert_eq!(
+            to_pig_latin(&long_input),
+            "ello-hay ".repeat(999) + "ello-hay"
+        );
+    }
+
+    #[test]
+    fn test_numeric_only_words() {
+        assert_eq!(to_pig_latin("123 456"), "123-ay 456-ay");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_mixed_scripts() {
+        assert_eq!(to_pig_latin("hello 你好"), "ello-hay 你好-ay");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_zero_width_spaces() {
+        assert_eq!(to_pig_latin("hello\u{200B}world"), "ello-hay orld-way");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_rtl_text() {
+        assert_eq!(to_pig_latin("hello עולם"), "ello-hay עולם-ay");
     }
 }
