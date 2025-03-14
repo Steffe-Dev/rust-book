@@ -1,4 +1,9 @@
-use std::{sync::mpsc, thread, time::Duration};
+use core::num;
+use std::{
+    sync::{Mutex, mpsc},
+    thread,
+    time::Duration,
+};
 pub fn take_turns() {
     thread::spawn(|| {
         for i in 1..100 {
@@ -117,4 +122,15 @@ pub fn channel_multi() {
     for msg in &rx {
         println!("Hello from rx: {msg}");
     }
+}
+
+pub fn single_thread_mutex() {
+    let m = Mutex::new(6);
+
+    {
+        let mut num = m.lock().unwrap();
+        *num = 6;
+    }
+
+    println!("m = {m:?}");
 }
