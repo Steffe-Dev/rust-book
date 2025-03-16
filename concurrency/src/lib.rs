@@ -1,6 +1,6 @@
 use core::num;
 use std::{
-    sync::{Mutex, mpsc},
+    sync::{Arc, Mutex, mpsc},
     thread,
     time::Duration,
 };
@@ -133,4 +133,24 @@ pub fn single_thread_mutex() {
     }
 
     println!("m = {m:?}");
+}
+
+pub fn multi_thread_mutex() {
+    let counter = Arc::new(Mutex::new(0));
+    let mut handles = vec![];
+
+    for _ in 0..10 {
+        let counter = Arc::clone(&counter);
+        let handle = thread::spawn(move || {
+            let mut num = counter.lock().unwrap();
+            *num += 1;
+        });
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    println!("Result: {}", *counter.lock().unwrap());
 }
