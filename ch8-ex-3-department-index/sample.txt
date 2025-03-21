@@ -1,0 +1,8 @@
+help
+add Jack to Sales
+add Sally to Engineering
+add Chris to Sales
+add Amir to HR
+list sales
+list
+exit
