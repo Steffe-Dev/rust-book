@@ -9,26 +9,32 @@ use std::{
 };
 
 struct Worker {
-    _id: usize,
-    _thread: JoinHandle<()>,
+    id: usize,
+    thread: JoinHandle<()>,
 }
 
 impl Worker {
     fn new(id: usize, receiver: Arc<Mutex<Receiver<Job>>>) -> Self {
-        let _thread = thread::spawn(move || {
+        let thread = thread::spawn(move || {
             loop {
-                let job = receiver
+                let message = receiver
                     .lock()
                     .expect("Thread was poisoned, could not acquire lock...")
-                    .recv()
-                    .expect("There was something wrong with the job...");
+                    .recv();
 
-                println!("Got a job in thread {id}");
-
-                job();
+                match message {
+                    Ok(job) => {
+                        println!("Got a job in Worker {id}; executing.");
+                        job();
+                    }
+                    Err(_) => {
+                        println!("Worker {id} disconnected; shutting down.");
+                        break;
+                    }
+                }
             }
         });
-        Self { _id: id, _thread }
+        Self { id, thread }
     }
 }
 
@@ -46,8 +52,8 @@ impl Display for PoolCreationError {
 
 impl Error for PoolCreationError {}
 pub struct ThreadPool {
-    _workers: Vec<Worker>,
-    sender: Sender<Job>,
+    workers: Vec<Worker>,
+    sender: Option<Sender<Job>>,
 }
 
 impl ThreadPool {
@@ -77,17 +83,32 @@ impl ThreadPool {
     fn safely_build_self(num_of_threads: usize) -> Self {
         let (sender, receiver) = mpsc::channel();
         let receiver = Arc::new(Mutex::new(receiver));
-        let _workers = (0..num_of_threads)
+        let workers = (0..num_of_threads)
             .into_iter()
             .map(|i| Worker::new(i, Arc::clone(&receiver)))
             .collect();
-        Self { _workers, sender }
+        Self {
+            workers,
+            sender: Some(sender),
+        }
     }
 
     pub fn execute<F>(&mut self, cb: F)
     where
         F: FnOnce() -> () + Send + 'static,
     {
-        self.sender.send(Box::new(cb)).unwrap()
+        self.sender.as_ref().unwrap().send(Box::new(cb)).unwrap()
+    }
+}
+
+impl Drop for ThreadPool {
+    fn drop(&mut self) {
+        drop(self.sender.take());
+
+        for worker in self.workers.drain(..) {
+            println!("Shutting down worker {}", worker.id);
+
+            worker.thread.join().unwrap();
+        }
     }
 }
